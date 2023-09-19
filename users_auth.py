@@ -27,28 +27,6 @@ client = MlflowClient()
 experiment_name = "nyc-taxi-exp-prefect"  # Replace with your experiment name
 
 
-def print_run_info(runs):
-    for r in runs:
-        print(f"run_id: {r.info.run_id}")
-        print(f"lifecycle_stage: {r.info.lifecycle_stage}")
-        print(f"metrics: {r.data.metrics}")
-
-        # Exclude mlflow system tags
-        tags = {k: v for k, v in r.data.tags.items() if not k.startswith("mlflow.")}
-        print(f"tags: {tags}")
-
-    # get the experiment
-    experiment_id = '59'
-
-    # Search all runs under experiment id and order them by
-    # descending value of the metric 'm'
-    client = MlflowClient()
-    runs = client.search_runs(experiment_id, order_by=["metrics.m DESC"])
-    print_run_info(runs)
-    print("--")
-
-
-
 # Make an API request to get experiment details
 url = f"{MLFLOW_REMOTE_SERVER}api/2.0/mlflow/experiments/get-by-name"
 auth = HTTPBasicAuth(MLFLOW_TRACKING_USERNAME, MLFLOW_TRACKING_PASSWORD)
