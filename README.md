@@ -1,6 +1,6 @@
 # mlflow_auth
 
-
+####  MLflow Authentication introduces several new API endpoints to manage users and permissions.
 
 ## Getting started
 
