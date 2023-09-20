@@ -1,4 +1,3 @@
-
 import mlflow
 from mlflow.tracking.client import MlflowClient
 
@@ -29,6 +28,8 @@ new_user_password = "<password>"  #type a new password
 
 # Define the new password of an existing user(admin)
 user_password = "<password>" #type a new password
+
+#Perform User management via API calls
 
 # Create a new user
 def create_new_user(auth, username, password):
