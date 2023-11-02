@@ -29,38 +29,64 @@ auth = None
 MLFLOW_TRACKING_USERNAME = None
 MLFLOW_TRACKING_USERNAME = None
 
-def list_all_exp():
-    # Define the command
-    command = "mlflow experiments search --view active_only"
+#This function only results with one experiment result for all users, the "Default" exp
+# def list_all_exp():
+#     # Define the command
+#     command = "mlflow experiments search --view all"
 
-    # Execute the command
-    result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+#     # Execute the command
+#     result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
-    # Check the result
-    if result.returncode == 0:
-        # Command was successful
-        print("Command executed successfully.")
-        print("Output:")
-        print(result.stdout)
+#     # Check the result
+#     if result.returncode == 0:
+#         # Command was successful
+#         print("Command executed successfully.")
+#         print("Output:")
+#         print(result.stdout)
         
-        # Parse the output to extract experiment names
-        experiment_names = []
-        lines = result.stdout.split('\n')
-        for line in lines:
-            # Experiment names are in the second column
-            columns = line.split()
-            if len(columns) >= 2:
-                experiment_names.append(columns[1])
+#         # Parse the output to extract experiment names
+#         experiment_names = []
+#         lines = result.stdout.split('\n')
+#         for line in lines:
+#             # Experiment names are in the second column
+#             columns = line.split()
+#             if len(columns) >= 2:
+#                 experiment_names.append(columns[1])
 
-        return experiment_names
+#         return experiment_names
 
+#     else:
+#         # Command encountered an error
+#         print("Command failed with the following error:")
+#         print(result.stderr)
+#         return []
+
+def search_exps(experiment_name):
+    url = f"{MLFLOW_REMOTE_SERVER}api/2.0/mlflow/experiments/search"
+    auth = HTTPBasicAuth(MLFLOW_TRACKING_USERNAME, MLFLOW_TRACKING_PASSWORD)
+    headers = {'Content-type': 'application/json'}
+
+    # Define search parameters
+    search_params = {
+        'filter': f"name LIKE '%{experiment_name}%'",
+        'max_results': 100,  # Set the desired max results
+        'order_by': ["name ASC"],  # Order by experiment name in ascending order
+        'view_type': "ALL"  # You can change this to your desired view type
+    }
+
+    response = requests.get(url, auth=auth, headers=headers, params=search_params)
+
+    if response.status_code == 200:
+        data = response.json()
+        experiments = data.get('experiments', [])
+        for experiment in experiments:
+            print("\n" + GREEN + f"Experiment Name: {experiment['name']}" + RESET)
+            print("\n" + GREEN + f"Experiment ID: {experiment['experiment_id']}" + RESET)
+            print("\n" + GREEN + f"Artifact Location: {experiment['artifact_location']}" + RESET)
     else:
-        # Command encountered an error
-        print("Command failed with the following error:")
-        print(result.stderr)
-        return []
+        print("\n" + RED + f"Failed to retrieve experiments details. Status code: {response.status_code}" + RESET)
 
-
+   
 
 # Function to authenticate as admin
 def authenticate_as_admin():
@@ -113,28 +139,30 @@ def get_experiment_details(experiment_name):
 def create_exp_permission(experiment_name, username, permission):
     # Specify the experiment name you want to grant to the user
     experiment = get_experiment_details(experiment_name)
-    experiment_id = experiment.get('experiment_id')
-        # Make an API request to get runs details of the above experiment selected
-    url = f"{MLFLOW_REMOTE_SERVER}api/2.0/mlflow/experiments/permissions/create"
-    auth = HTTPBasicAuth(MLFLOW_TRACKING_USERNAME, MLFLOW_TRACKING_PASSWORD)
-    response = requests.post(
-    url,
-    auth=auth,
-    json={
-        "experiment_id": experiment_id,
-        "username": username,
-        "permission": permission
-    },
-    )       
-    if response.status_code == 200:
-        data = response.json()
-        print("\n" + GREEN + f"Experiment permissions created for the given user. Status code: {response.status_code}" + RESET)
-    elif response.status_code == 400:
-        print("\n" + RED + f"Resource already exists and only one permission can be assigned to a user for a given exp. Status code: {response.status_code}" + RESET)
+    if experiment is not None:
+        experiment_id = experiment.get('experiment_id')
+            # Make an API request to get runs details of the above experiment selected
+        url = f"{MLFLOW_REMOTE_SERVER}api/2.0/mlflow/experiments/permissions/create"
+        auth = HTTPBasicAuth(MLFLOW_TRACKING_USERNAME, MLFLOW_TRACKING_PASSWORD)
+        response = requests.post(
+        url,
+        auth=auth,
+        json={
+            "experiment_id": experiment_id,
+            "username": username,
+            "permission": permission
+        },
+        )       
+        if response.status_code == 200:
+            data = response.json()
+            print("\n" + GREEN + f"Experiment permissions created for the given user. Status code: {response.status_code}" + RESET)
+        elif response.status_code == 400:
+            print("\n" + RED + f"Resource already exists and only one permission can be assigned to a user for a given exp. Status code: {response.status_code}" + RESET)
+        else:
+            print("\n" + RED + f"Experiment permission with experiment_id= {experiment_id} and username= {username} not found. Status code: {response.status_code}" + RESET)      
+        return experiment_id, username, permission
     else:
-        print("\n" + RED + f"Experiment permission with experiment_id= {experiment_id} and username= {username} not found. Status code: {response.status_code}" + RESET)      
-
-    return experiment_id, username, permission
+        print("\n" + RED + "Experiment does not exist!" + RESET)
 
 
 # GET EXP permissions, you need an experiment_id (needs to be found based on the name) and username
@@ -336,9 +364,33 @@ def get_model_details(model_name):
         print(f"Last Update TS: {registered_model['last_updated_timestamp']}")
         print(f"Latest Version: {registered_model['latest_versions']}")
     else:
-        print("\n" + RED + f"Failed to retrieve experiments details. Status code: {response.status_code}" + RESET)
+        print("\n" + RED + f"Failed to retrieve model details. Status code: {response.status_code}" + RESET)
 
     return registered_model
+
+# Make an API request to get model's permission object details
+def get_model_permission_details(model_name, username):
+    
+    url = f"{MLFLOW_REMOTE_SERVER}api/2.0/mlflow/registered-models/permissions/get"
+    auth = HTTPBasicAuth(MLFLOW_TRACKING_USERNAME, MLFLOW_TRACKING_PASSWORD)
+    headers = {'Content-type': 'application/json'}
+    params = {'name': model_name,
+            'username': username}
+    response = requests.get(url, auth=auth, headers=headers, params=params)
+
+    if response.status_code == 200:
+        response_json = response.json()
+        registered_model_perm = response_json.get('registered_model_permission', {})
+        
+        if isinstance(registered_model_perm, dict):
+            print("\n" + GREEN + f"Model name: {registered_model_perm.get('name')}" + RESET)
+            print("\n" + GREEN + f"Permissions: {registered_model_perm.get('permission')}" + RESET)
+            print("\n" + GREEN + f"User-id: {registered_model_perm.get('user_id')}" + RESET)
+        else:
+            print("\n" + RED + "Registered model permission is not a dictionary." + RESET)
+    else:
+        print("\n" + RED + f"Failed to retrieve model permission details. Status code: {response.status_code}" + RESET)
+
 
 # Create RegisteredModel Permission via API calls
 def create_regModel_permission(model_name, username, permission):
@@ -391,10 +443,11 @@ def udpate_regModel_permission(model_name, username, permission):
     if response.status_code == 200:
         exp_user_perm = response.json()
         print("\n" + RED + f"Model permission update successful. Status code: {response.status_code}" + RESET)
+        return exp_user_perm
     else:
         print("\n" + RED + f"Model permission with model-name= {model_name} and username= {username} not found. Status code: {response.status_code}" + RESET)
 
-    return exp_user_perm
+    
 
 def delete_regModel_permission(model_name, username):
     
@@ -434,7 +487,8 @@ def display_menu():
         choice = input("Enter your choice (0/1/2/3/4/5/6/7/8/9/10/11): ")
 
         if choice == "0":
-            experiment_names = list_all_exp()
+            experiment_name = input("Enter a possible experiment-name: ")
+            search_exps(experiment_name)
         elif choice == "1":
             experiment_name = input("Enter the experiment name: ")
             username = input(f"Enter the username you want to grant permissions to experiment: :{experiment_name}_________")
@@ -442,11 +496,12 @@ def display_menu():
             create_exp_permission(experiment_name, username, permission)
         elif choice == "2":
             experiment_name = input("Enter the experiment name: ")
-            experiment_names = list_all_exp()
-            for exp in experiment_names:
-                if exp == experiment_name:
-                    username = input("Enter the username you want to show what permissions have for the experiment: ")
-                    get_exp_permission(experiment_name, username)
+            #experiment_names = list_all_exp()
+            #for exp in experiment_names:
+                #if exp == experiment_name:
+            get_experiment_details(experiment_name)
+            username = input("Enter the username you want to show what permissions (s)he have for the experiment: ")
+            get_exp_permission(experiment_name, username)
         elif choice == "3":
             experiment_name = input("Enter the experiment name you want to update its permissions: ")
             username = input("Enter the username: ")
@@ -466,8 +521,8 @@ def display_menu():
             create_regModel_permission(model_name, username, permission)
         elif choice == "7":
             model_name = input("Enter the Registered Model name: ")
-            #username = input("Enter the username you want to show what permissions have for the model: ")
-            get_model_details(model_name)
+            username = input("Enter the username you want to show what permissions (s)he have for the model: ")
+            get_model_permission_details(model_name, username)
         elif choice == "8":
             model_name = input("Enter the model name you want to update its permissions: ")
             username = input("Enter the username: ")
