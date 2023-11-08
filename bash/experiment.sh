@@ -43,15 +43,15 @@ function usage()
                             \t   $0 -e <id> -u <user> -p <permissions> --create-permissions
        --delete-permissions \t delete experiment <id> permissions for <user>, e.g.
                             \t   $0 -e <id> -u <user> --delete-permissions
-    -e|--exp-id \t\t provide experiment <id>
+    -e|--exp-id \t\t provide experiment <id> for get/create/update permissions (has to be before the operation!)
     -g|--get \t\t\t get experiment info by its <id>, e.g. $0 -e <id> --get
        --get-by-name <name> \t get experiment info by its <name>
        --get-permissions \t get experiment permissions by its <id>, e.g.
                          \t   $0 -e <id> -u <user> --get-permissions
-    -p|--permissions \t <permissions> to be set (READ|EDIT|MANAGE|NO_PERMISSIONS)
-       --update-permissions \t update experiment <id> <permissions> for <user>, e.g.
+    -p|--permissions \t <permissions> to be set (READ|EDIT|MANAGE|NO_PERMISSIONS) (has to be before the operation!)
+       --update-permissions \t update <permissions> for the experiment <id> and <user>, e.g.
                             \t   $0 -e <id> -u <user> -p <permissions> --update-permissions
-    -u|--user <user> \t\t provide <user> for which to get/create/update/delete permissions
+    -u|--user <user> \t\t provide <user> for which to get/create/update/delete permissions (has to be before the operation!)
     -v|--version \t\t get scripts version" 1>&2; exit 0;
 }
 

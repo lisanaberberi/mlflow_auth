@@ -27,13 +27,14 @@ function usage()
     Usage: $0 <option> \n
     Options (only ONE option at the time!):
     -h|--help \t\t\t the help message
-    -c|--create <user> \t\t create a new <user>
-    -d|--delete <user> \t\t delete <user>
-    -g|--get <user> \t\t get <user> info
-       --get-as-admin <user> \t get <user> info being an admin
-    -p|--update-pass <user>\t update <user>'s password
-       --is-admin <user> \t make <user> admin
-       --not-admin <user> \t remove admin status from the <user>
+    -c|--create \t\t create a new <user>
+    -d|--delete \t\t delete <user>
+    -g|--get \t\t\t get <user> info
+       --get-as-admin \t\t get <user> info being an admin
+    -p|--update-pass \t\t update <user>'s password
+       --is-admin \t\t make <user> admin
+       --not-admin \t\t remove admin status from the <user>
+    -u|--user <user> \t\t provide <user> for create/delete/get/update operations (has to be before the operation!)
     -v|--version \t\t get scripts version" 1>&2; exit 0;
 }
 
@@ -93,8 +94,8 @@ function update-admin()
 
 function check_arguments()
 {
-    OPTIONS=hc:g:d:p:v
-    LONGOPTS=help,create:,get:,get-as-admin:,delete:,update-pass:,is-admin:,not-admin:,version
+    OPTIONS=hcgdpu:v
+    LONGOPTS=help,create,get,get-as-admin,delete,update-pass,is-admin,not-admin,user:,version
     # https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
     # saner programming env: these switches turn some bugs into errors
     #set -o errexit -o pipefail -o noclobber -o nounset
@@ -132,40 +133,37 @@ function check_arguments()
                 break
                 ;;
             -c|--create)
-                USER="$2"
                 create-user
-                break
+                shift
                 ;;
             -d|--delete)
-                USER="$2"
                 delete-user
-                break
+                shift
                 ;;
             -g|--get)
-                USER="$2"
                 get-user
-                break
+                shift
                 ;;
             --get-as-admin)
-                USER="$2"
                 get-user-as-admin
-                break
+                shift
                 ;;
             -p|--update-pass)
-                USER="$2"
                 update-pass
-                break
+                shift
                 ;;
             --is-admin)
-                USER="$2"
                 update-admin true
-                break
+                shift
                 ;;
              --not-admin)
-                USER="$2"
                 update-admin false
-                break
-                ;;           
+                shift
+                ;;
+             -u|--user)
+                USER="$2"
+                shift 2
+                ;;        
             -v|--version)
                 echo "Version of the bash scripts: $VERSION"
                 exit 0
