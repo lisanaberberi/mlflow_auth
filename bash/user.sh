@@ -34,7 +34,7 @@ function usage()
     -p|--update-pass <user>\t update <user>'s password
        --is-admin <user> \t make <user> admin
        --not-admin <user> \t remove admin status from the <user>
-    -v|--version \t\t get script version" 1>&2; exit 0;
+    -v|--version \t\t get scripts version" 1>&2; exit 0;
 }
 
 function create-user()
@@ -167,7 +167,7 @@ function check_arguments()
                 break
                 ;;           
             -v|--version)
-                echo "Version of the script, $0: $VERSION"
+                echo "Version of the bash scripts: $VERSION"
                 exit 0
                 ;;
             --)
