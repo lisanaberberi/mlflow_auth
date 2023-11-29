@@ -21,6 +21,10 @@ There are the following python scripts that will serve admins to manage users an
 
 
 ```
+
+### Install dependencies from the requirements.txt
+* run `pip install -r requirements.txt`
+
 ## Add your files
 * [user_management.py](https://git.scc.kit.edu/m-team/ai/mlflow_auth/-/blob/main/user_management.py): 
 Contains methods to create new users, update passwords, update standard users as admin and finally delete existing users are written
