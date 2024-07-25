@@ -9,7 +9,7 @@ import getpass
 import pyfiglet
 
 # Remote MLFlow server
-MLFLOW_REMOTE_SERVER="http://mlflow.dev.ai4eosc.eu/"
+MLFLOW_REMOTE_SERVER="https://mlflow.dev.ai4eosc.eu/"
 
 
 #Set the MLflow server and backend and artifact stores
@@ -157,6 +157,7 @@ def show_menu():
             update_user_as_admin(auth, username)
         elif choice == "3":
             password=getpass.getpass("\nEnter the new password: ")
+            username=MLFLOW_TRACKING_USERNAME
             update_password(auth, username, password)
         elif choice == "4":
             username=input("\nEnter the username you want to get info for: ")
